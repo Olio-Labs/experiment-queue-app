@@ -11,6 +11,12 @@ class Settings(BaseSettings):
     airtable_table_name: str = "experiment_queue"
     assignment_field_name: str = "assignment"
 
+    # Table names
+    experiments_copy_testing_table_name: str = "experiments"
+    experiment_planner_copy_testing_table_name: str = "experiment_planner"
+    boxes_table_name: str = "boxes"
+    cages_table_name: str = "cages"
+
     # Google Calendar
     google_experiment_calendar_id: str = ""
     google_tech_calendar_id: str = ""
