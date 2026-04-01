@@ -25,6 +25,40 @@ AIRTABLE_CAGE_MANIPULATION_HISTORY_FIELD_NAME = (
     "manipulation_history"
 )
 WASHOUT_MANIPULATION_STRING = "washout"
+MAX_MICE_PER_TECHNICIAN_PER_DAY = 60
+DAYS_OF_WEEK_ORDERED = [
+    "Monday", "Tuesday", "Wednesday", "Thursday",
+    "Friday", "Saturday", "Sunday",
+]
+
+# Fallback technician availability (used when Google Calendar
+# is unavailable)
+TEMP_TECHNICIAN_AVAILABILITY: dict[str, list[tuple[str, int]]] = {
+    "Monday": [("Henry", 5)],
+    "Tuesday": [("James", 4), ("Angie", 4)],
+    "Wednesday": [("Henry", 4), ("James", 4)],
+    "Thursday": [("Henry", 4), ("Angie", 4)],
+    "Friday": [("Henry", 4), ("Angie", 4), ("Tom", 4)],
+    "Saturday": [("Henry", 4), ("Tom", 4)],
+    "Sunday": [("Henry", 4), ("Tom", 4)],
+}
+
+# Box groups for spatial cage assignment
+BOXES_1 = [
+    9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 41, 42, 43, 44, 45,
+    46, 47, 48,
+]
+BOXES_2 = [
+    28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+    40, 49, 50, 51, 52, 53, 54, 55, 56, 84, 85, 86,
+    87, 88,
+]
+BOXES_3 = [
+    57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+    69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+    81, 82, 83,
+]
 
 
 # --- Thin wrappers delegating to service layer ---
@@ -685,3 +719,189 @@ def split_pseudorandom_experiment(
         split_experiments.append(split_exp)
 
     return split_experiments
+
+
+# --- Scheduling support functions ---
+
+
+def create_cage_to_box_mapping(
+    all_cages_data: list[dict],
+    all_boxes_data: list[dict],
+) -> dict[str, int]:
+    """Create a mapping from cage record ID to box group number (1-3)."""
+    box_id_to_group: dict[str, int] = {}
+    for box_num in BOXES_1:
+        box_id_to_group[f"b{box_num:07d}"] = 1
+    for box_num in BOXES_2:
+        box_id_to_group[f"b{box_num:07d}"] = 2
+    for box_num in BOXES_3:
+        box_id_to_group[f"b{box_num:07d}"] = 3
+
+    box_record_id_to_box_id: dict[str, str] = {}
+    for box_record in all_boxes_data:
+        if "id" in box_record and "fields" in box_record:
+            box_id = box_record["fields"].get("box_id")
+            if box_id:
+                box_record_id_to_box_id[box_record["id"]] = box_id
+
+    cage_to_box_group: dict[str, int] = {}
+    for cage_record in all_cages_data:
+        if "id" in cage_record and "fields" in cage_record:
+            cage_record_id = cage_record["id"]
+            box_links = cage_record["fields"].get("box", [])
+            if box_links and len(box_links) > 0:
+                box_record_id = box_links[0]
+                box_id = box_record_id_to_box_id.get(box_record_id)
+                if box_id:
+                    box_group = box_id_to_group.get(box_id)
+                    if box_group:
+                        cage_to_box_group[cage_record_id] = (
+                            box_group
+                        )
+
+    logger.info(
+        f"Created cage-to-box mapping for "
+        f"{len(cage_to_box_group)} cages"
+    )
+    return cage_to_box_group
+
+
+def get_technicians_and_capacity_per_day(
+    availability_schedule: dict,
+) -> dict[str, dict[str, Any]]:
+    """Calculate technician counts and mice capacity per day."""
+    daily_tech_details: dict[str, dict[str, Any]] = {}
+    for day, tech_list in availability_schedule.items():
+        unique_techs = set(
+            name for name, hours in tech_list if hours > 0
+        )
+        num_techs = len(unique_techs)
+        total_hours = sum(hours for _, hours in tech_list)
+        daily_tech_details[day] = {
+            "num_technicians": num_techs,
+            "max_mice": num_techs * MAX_MICE_PER_TECHNICIAN_PER_DAY,
+            "total_hours_available": total_hours,
+        }
+    return daily_tech_details
+
+
+def sort_experiments_for_scheduling(
+    experiments: list[dict],
+) -> list[dict]:
+    """Sort experiments by priority, assignment type, num_days, creation time."""
+    assignment_field = settings.assignment_field_name
+
+    def sort_key(exp: dict) -> tuple:
+        fields = exp.get("fields", {})
+        priority = fields.get("priority", float("inf"))
+        assignment_type = fields.get(assignment_field, "").lower()
+        num_days = fields.get("num_days", 1)
+        created_str = exp.get(
+            "createdTime", "9999-12-31T23:59:59.999Z"
+        )
+        try:
+            if "." in created_str:
+                created = datetime.strptime(
+                    created_str, "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
+            else:
+                created = datetime.strptime(
+                    created_str, "%Y-%m-%dT%H:%M:%SZ"
+                )
+        except ValueError:
+            created = datetime.max
+        assignment_order = (
+            0 if assignment_type == "direct_mapping" else 1
+        )
+        return (priority, assignment_order, -num_days, created)
+
+    return sorted(experiments, key=sort_key)
+
+
+def check_technician_resources_for_period(
+    experiment_time_per_day_minutes: float,
+    num_mice_for_experiment: int,
+    start_day_name: str,
+    num_days_duration: int,
+    tech_availability_schedule: dict,
+    daily_tech_time_booked: dict[str, float],
+    daily_mice_booked: dict[str, int],
+    daily_tech_details_map: dict[str, dict[str, Any]],
+) -> tuple[bool, str]:
+    """Check if technicians have enough time and mice capacity.
+
+    Returns (True, "") and updates daily_tech_time_booked IN PLACE
+    if successful. Returns (False, reason) without modifying if not.
+    """
+    try:
+        start_idx = DAYS_OF_WEEK_ORDERED.index(start_day_name)
+    except ValueError:
+        return False, "Invalid start day name."
+
+    days_to_check = min(num_days_duration, 7)
+    total_time_to_commit: dict[str, float] = {}
+
+    for i in range(days_to_check):
+        day_idx = (start_idx + i) % 7
+        day_name = DAYS_OF_WEEK_ORDERED[day_idx]
+
+        total_time_to_commit[day_name] = (
+            total_time_to_commit.get(day_name, 0)
+            + experiment_time_per_day_minutes
+        )
+
+        details = daily_tech_details_map.get(day_name)
+        if not details:
+            return False, (
+                f"No technicians defined for {day_name}."
+            )
+
+        available_min = details["total_hours_available"] * 60
+        already_booked = daily_tech_time_booked.get(day_name, 0)
+        needed = total_time_to_commit[day_name]
+        remaining = available_min - (already_booked + needed)
+
+        if (already_booked + needed) > available_min:
+            return False, (
+                f"Not enough tech time on {day_name}. "
+                f"Need {needed:.1f}, available: {remaining:.1f}."
+            )
+
+        max_mice = details["max_mice"]
+        mice_booked = daily_mice_booked.get(day_name, 0)
+        if (mice_booked + num_mice_for_experiment) > max_mice:
+            return False, (
+                f"Not enough mice capacity on {day_name}. "
+                f"Need {num_mice_for_experiment}, "
+                f"available: {max_mice - mice_booked}."
+            )
+
+    for day_name, new_time in total_time_to_commit.items():
+        if new_time > 0:
+            daily_tech_time_booked[day_name] = (
+                daily_tech_time_booked.get(day_name, 0) + new_time
+            )
+
+    return True, ""
+
+
+def extract_washout_violations_from_notes(
+    notes: str,
+) -> tuple[str, list[str]]:
+    """Extract washout violations from notes string.
+
+    Returns (cleaned_notes, list_of_violation_cage_ids).
+    """
+    marker = "__WASHOUT_VIOLATIONS__:"
+    if marker not in notes:
+        return notes, []
+
+    parts = notes.split(marker)
+    cleaned_notes = parts[0].rstrip()
+    violations_str = parts[1].strip() if len(parts) > 1 else ""
+    violations = [
+        v.strip()
+        for v in violations_str.split(",")
+        if v.strip()
+    ]
+    return cleaned_notes, violations
