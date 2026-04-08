@@ -5,7 +5,6 @@ from __future__ import annotations
 import concurrent.futures
 import logging
 import os
-import time as _time
 from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -17,11 +16,13 @@ from ..config import settings
 from ..services.box_room_service import (
     fetch_box_room_data,
     fetch_cages_without_box_data,
-    get_box_flagged_issues_history as _get_box_history,
     get_box_video_url,
     get_cart_event_videos,
     get_experiment_ids_for_start_date,
     get_start_date_for_experiment_id,
+)
+from ..services.box_room_service import (
+    get_box_flagged_issues_history as _get_box_history,
 )
 
 logger = logging.getLogger(__name__)

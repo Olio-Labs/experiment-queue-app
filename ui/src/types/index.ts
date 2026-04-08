@@ -123,3 +123,43 @@ export interface CagePreview {
 export interface FormOptions {
   options: Record<string, string[]>;
 }
+
+/** Scheduling preview types */
+export interface ScheduledExperimentResult {
+  record_id: string;
+  experiment_id: string | null;
+  assignment: string;
+  priority: number | string;
+  num_days: number;
+  scheduled_start_date: string;
+  scheduled_end_date: string;
+  experiment_time_daily: number;
+  experiment_time_total: number;
+  assigned_cages: string[];
+  assigned_cage_record_ids: string[];
+  cage_to_manip_map: Record<string, string[]>;
+  syringe_colors: Record<string, string>;
+  manipulation_ids: string[];
+  notes: string;
+  config_file: string;
+  cages_per_manip: number | string | null;
+  warnings: string[];
+  status: string | null;
+  deferral_reason: string | null;
+  tasks: string[];
+}
+
+export interface SchedulingPreviewResponse {
+  scheduled_experiments: ScheduledExperimentResult[];
+  in_progress_experiments: ScheduledExperimentResult[];
+  already_scheduled_experiments: ScheduledExperimentResult[];
+  deferred_experiments: ScheduledExperimentResult[];
+  cage_heatmap_data: Record<string, unknown>;
+  cage_usage_chart_data: Record<string, unknown>[];
+  washout_violations: string[];
+  drug_warnings: string[];
+  available_syringe_colors: string[];
+  total_cages: number;
+  total_boxes: number;
+  scheduling_errors: string[];
+}

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Iterable, List
+from typing import List
 
+from ..domain.experiment import Experiment, ExperimentFactory
 from ..repositories.airtable_base import AirtableBase
 from ..repositories.experiments_repo import ExperimentsRepository
-from ..domain.experiment import Experiment, ExperimentFactory
 from ..services.notes_parser import parse_notes
 
 

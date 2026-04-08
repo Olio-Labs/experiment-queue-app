@@ -11,7 +11,6 @@ import ast
 import re
 from typing import Dict, List, Optional, Tuple
 
-
 _MANIPS_LIST_PATTERN = re.compile(r"manips\s*=\s*\[(.*?)\]", re.IGNORECASE | re.DOTALL)
 _MAP_PATTERN = re.compile(r"map\s*=\s*(\{.*?\})", re.IGNORECASE | re.DOTALL)
 
@@ -43,7 +42,7 @@ def parse_notes(notes_str: Optional[str]) -> Tuple[Dict[str, List[str]], List[st
                         direct_map[str(k)] = []
                     else:
                         direct_map[str(k)] = [str(v)]
-        except Exception as e:
+        except Exception:
             import logging
             logging.getLogger('notes_parser').warning(
                 f"Failed to parse notes mapping; leaving direct_map empty. Raw: {map_str[:200]}",
@@ -59,7 +58,7 @@ def parse_notes(notes_str: Optional[str]) -> Tuple[Dict[str, List[str]], List[st
             parsed_list = ast.literal_eval(_sanitize_list_literal(f"[{items_str}]"))
             if isinstance(parsed_list, (list, tuple)):
                 manip_ids = [str(x) for x in parsed_list if str(x).strip()]
-        except Exception as e:
+        except Exception:
             import logging
             logging.getLogger('notes_parser').warning(
                 f"Failed to parse manips list; leaving empty. Raw: {items_str[:200]}",

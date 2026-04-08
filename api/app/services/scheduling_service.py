@@ -3,11 +3,11 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Optional, Set, Tuple
+
+import pytz
 
 from .date_range import DateRange
-import pytz
-from googleapiclient.discovery import build  # type: ignore
 
 logger = logging.getLogger(__name__)
 

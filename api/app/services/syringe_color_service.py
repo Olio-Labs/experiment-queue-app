@@ -1,7 +1,6 @@
+from collections import defaultdict
 from datetime import date
 from typing import Dict, Set
-
-from collections import defaultdict
 
 from app.repositories.planner_repo import PlannerRepository
 

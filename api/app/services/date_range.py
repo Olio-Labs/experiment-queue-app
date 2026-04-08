@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Iterable, Iterator, List
+from typing import Iterator, List
 
 
 @dataclass(frozen=True)

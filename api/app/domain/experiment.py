@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import logging
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Dict, List, Optional, Set
 
@@ -108,8 +108,8 @@ class DirectMappingExperiment(Experiment):
         )
 
     def assign_cages(self, ctx: ExperimentContext) -> List[str]:
-        from app.services.notes_parser import parse_notes, update_notes_with_mapping
         from app.services.cage_availability_service import is_cage_available_on_date
+        from app.services.notes_parser import parse_notes, update_notes_with_mapping
 
         warnings: List[str] = []
 
@@ -224,9 +224,10 @@ class PseudorandomExperiment(Experiment):
 
     def assign_cages(self, ctx: ExperimentContext) -> List[str]:
         from datetime import timedelta
+
         from app.services.cage_availability_service import (
-            select_cages_spatially_with_availability,
             is_cage_available_on_date,
+            select_cages_spatially_with_availability,
         )
         from app.services.notes_parser import update_notes_with_mapping
 

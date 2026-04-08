@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import logging
-import os
-from collections import defaultdict
-from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from datetime import date, datetime
+from typing import Optional
 
 from pyairtable import Api
 

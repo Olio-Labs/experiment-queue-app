@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
 from ..config import settings
+from ..schemas import PushPlanRequest
+from ..services.scheduling_orchestrator import SchedulingOrchestrator
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -17,66 +20,35 @@ router = APIRouter()
 def get_plan_preview(
     start_date: Optional[str] = Query(None),
 ) -> dict:
-    """Get experiment plan preview for scheduling.
+    """Compute and return the full scheduling preview."""
+    parsed_start = None
+    if start_date:
+        try:
+            parsed_start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid date format. Use YYYY-MM-DD.",
+            )
 
-    This is a complex endpoint that replicates the experiment_plan_preview
-    route from app.py. It computes the scheduling preview using technician
-    availability, cage availability, and experiment constraints.
-    """
     try:
-        from pyairtable import Api
-
-        from ..helpers.airtable_helpers import (
-            get_all_boxes,
-            get_all_cages,
-            get_all_experiments_from_queue,
-            get_all_manipulations,
-        )
-
-        api_key = settings.airtable_api_key
-        base_id = settings.airtable_base_id
-
-        # Fetch all data needed for scheduling
-        all_records = get_all_experiments_from_queue(
-            api_key, base_id, settings.airtable_table_name
-        )
-        all_cages = get_all_cages(api_key, base_id)
-        all_boxes = get_all_boxes(api_key, base_id)
-        all_manipulations = get_all_manipulations(api_key, base_id)
-
-        # Filter to queued experiments
-        queued = [
-            r for r in all_records
-            if r.get("fields", {}).get("status", "").strip().lower()
-            not in {"done", "hold", "in-progress", "in progress", "running"}
-        ]
-
-        return {
-            "experiments": queued,
-            "total_cages": len(all_cages),
-            "total_boxes": len(all_boxes),
-            "total_manipulations": len(all_manipulations),
-            "message": (
-                "Plan preview data loaded. Full scheduling computation "
-                "to be implemented."
-            ),
-        }
+        orchestrator = SchedulingOrchestrator(settings)
+        result = orchestrator.compute_preview(parsed_start)
+        return result.model_dump()
     except Exception as e:
         logger.error(f"Error generating plan preview: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/push")
-def push_plan_to_airtable(data: dict) -> dict:
+def push_plan_to_airtable(request: PushPlanRequest) -> dict:
     """Push the scheduled plan to Airtable."""
     try:
-        # TODO: Implement the full plan push logic from app.py
-        # This requires the scheduled plan state from the preview
-        return {
-            "success": True,
-            "message": "Plan push endpoint ready — full logic to be migrated",
-        }
+        orchestrator = SchedulingOrchestrator(settings)
+        result = orchestrator.push_plan(request)
+        return result.model_dump()
     except Exception as e:
+        logger.error(f"Error pushing plan: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -84,12 +56,10 @@ def push_plan_to_airtable(data: dict) -> dict:
 def clear_scheduled_plan() -> dict:
     """Clear the scheduled plan from Airtable."""
     try:
-        # TODO: Implement the clear logic from app.py
-        return {
-            "success": True,
-            "message": "Clear endpoint ready — full logic to be migrated",
-        }
+        orchestrator = SchedulingOrchestrator(settings)
+        return orchestrator.clear_plan()
     except Exception as e:
+        logger.error(f"Error clearing plan: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -97,12 +67,8 @@ def clear_scheduled_plan() -> dict:
 def recalculate_experiment_times() -> dict:
     """Recalculate experiment time estimates."""
     try:
-        # TODO: Implement the recalculation logic from app.py
-        return {
-            "success": True,
-            "message": (
-                "Recalculate endpoint ready — full logic to be migrated"
-            ),
-        }
+        orchestrator = SchedulingOrchestrator(settings)
+        return orchestrator.recalculate_times()
     except Exception as e:
+        logger.error(f"Error recalculating times: {e}")
         raise HTTPException(status_code=500, detail=str(e))

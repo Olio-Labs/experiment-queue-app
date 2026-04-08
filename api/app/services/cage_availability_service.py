@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Set, Tuple
-from datetime import datetime
 
 
 def is_cage_available_on_date(

@@ -18,9 +18,7 @@ def test_list_experiments_returns_200(client, mock_env, mock_airtable_api):
         mock_base = MagicMock()
         mock_base_cls.from_env.return_value = mock_base
 
-        with patch(
-            "app.routers.experiments.ExperimentsRepository"
-        ) as mock_repo_cls:
+        with patch("app.routers.experiments.ExperimentsRepository") as mock_repo_cls:
             mock_repo = MagicMock()
             mock_repo.list_active.return_value = []
             mock_repo_cls.return_value = mock_repo
@@ -41,9 +39,7 @@ def test_list_experiments_returns_200(client, mock_env, mock_airtable_api):
 
 def test_get_form_options(client, mock_env):
     """Form options endpoint returns 200."""
-    with patch(
-        "app.routers.experiments.get_all_dropdown_options"
-    ) as mock_opts:
+    with patch("app.routers.experiments.get_all_dropdown_options") as mock_opts:
         mock_opts.return_value = {"priority": ["1", "2", "3"]}
         response = client.get("/api/experiments/form-options")
         assert response.status_code == 200
@@ -81,17 +77,6 @@ def test_weekly_calendar(client, mock_env):
 
 def test_scheduling_preview(client, mock_env):
     """Scheduling preview returns data."""
-    with patch(
-        "app.routers.scheduling.get_all_experiments_from_queue"
-    ) as mock_exps:
-        mock_exps.return_value = []
-        with patch("app.routers.scheduling.get_all_cages") as mock_cages:
-            mock_cages.return_value = []
-            with patch("app.routers.scheduling.get_all_boxes") as mock_boxes:
-                mock_boxes.return_value = []
-                with patch(
-                    "app.routers.scheduling.get_all_manipulations"
-                ) as mock_manips:
-                    mock_manips.return_value = []
-                    response = client.get("/api/scheduling/preview")
-                    assert response.status_code == 200
+    with patch("pyairtable.Api", return_value=MagicMock()):
+        response = client.get("/api/scheduling/preview")
+        assert response.status_code == 200

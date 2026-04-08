@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import List
 
 from .airtable_base import AirtableBase
-
 
 CAGES_TABLE = 'cages'
 BOXES_TABLE = 'boxes'

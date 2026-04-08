@@ -1,27 +1,31 @@
-from typing import Dict, List, Tuple, Any, Optional, Set
-from pyairtable import Api
-import pandas as pd
-import boto3
-from datetime import datetime, timedelta
-import re
-import gzip
-import io
 import csv
-from urllib.parse import urlparse
-import tempfile
-from pathlib import Path
+import gzip
 import hashlib
+import io
+import re
 import shutil
-import cv2
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
+
+import boto3
+import cv2
 import matplotlib
+import pandas as pd
+from pyairtable import Api
+
 matplotlib.use('Agg')  # Use non-interactive backend
-import matplotlib.pyplot as plt
 import base64
 import logging
-import time
-from dotenv import load_dotenv
 import os
+import time
+
+import matplotlib.pyplot as plt
+from dotenv import load_dotenv
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -483,16 +487,16 @@ def fetch_cages_without_box_data(api_key: str, base_id: str, filter_taconic_only
 
     fields = ['cage', 'sex', 'n_mice', 'flagged_issues', 'flagged_issues_history', 'alive', 'box_id', 'bought_from']
     records = table.all(formula=formula, fields=fields)
-    
+
     cages_data = []
     cages_with_issues = []
-    
+
     for rec in records:
         f = rec.get('fields', {})
         cage_id = str(f.get('cage')) if f.get('cage') is not None else None
         if not cage_id:
             continue
-            
+
         sex_value = (f.get('sex') or '').strip().lower()
         try:
             n_mice = int(f.get('n_mice') or 0)
@@ -501,16 +505,16 @@ def fetch_cages_without_box_data(api_key: str, base_id: str, filter_taconic_only
                 n_mice = int(float(str(f.get('n_mice'))))
             except Exception:
                 n_mice = 0
-                
+
         flagged_issues_raw = f.get('flagged_issues') or []
         if isinstance(flagged_issues_raw, str):
             flagged_issues_list = [flagged_issues_raw]
         else:
             flagged_issues_list = [str(v) for v in flagged_issues_raw if v is not None]
-            
+
         # Exclude 'None' (case-insensitive)
         filtered_issues = [iss for iss in flagged_issues_list if iss.strip().lower() != 'none']
-        
+
         cage_data = {
             'cage_id': cage_id,
             'sex': sex_value,
@@ -518,15 +522,15 @@ def fetch_cages_without_box_data(api_key: str, base_id: str, filter_taconic_only
             'issues': filtered_issues,
             'issues_history_present': bool(str(f.get('flagged_issues_history') or '').strip())
         }
-        
+
         cages_data.append(cage_data)
-        
+
         if filtered_issues:
             cages_with_issues.append(cage_id)
-    
+
     # Sort cages by cage_id
     cages_data.sort(key=lambda x: x['cage_id'])
-    
+
     return cages_data, cages_with_issues
 
 
@@ -595,30 +599,29 @@ def get_cage_flagged_issues_history(cage_id: str) -> str:
     Returns the flagged_issues_history text field content.
     """
     try:
-        from dotenv import load_dotenv
         import os
-        
+
         api_key = os.getenv('AIRTABLE_API_KEY')
         base_id = os.getenv('AIRTABLE_BASE_ID')
-        
+
         if not api_key or not base_id:
             print("Error: AIRTABLE_API_KEY or AIRTABLE_BASE_ID not found in environment")
             return ''
-        
+
         table = Api(api_key).table(base_id, 'cages')
-        
+
         # Filter by cage_id
         formula = f"{{cage}} = '{cage_id}'"
         fields = ['flagged_issues_history']
-        
+
         records = table.all(formula=formula, fields=fields)
-        
+
         if records and len(records) > 0:
             fields_data = records[0].get('fields', {})
             return str(fields_data.get('flagged_issues_history') or '').strip()
-        
+
         return ''
-        
+
     except Exception as e:
         print(f"Error fetching cage flagged issues history for {cage_id}: {e}")
         return ''
@@ -711,9 +714,9 @@ def _try_find_recent_video(
     """
     # Construct S3 prefix path
     s3_prefix = f"{experiment_id}/{box_id}/{cage_id}/"
-    
+
     print(f"Looking for videos in S3: s3://{s3_bucket}/{s3_prefix}")
-    
+
     # List objects in S3
     try:
         response = s3_client.list_objects_v2(
@@ -723,15 +726,15 @@ def _try_find_recent_video(
     except Exception as e:
         print(f"Error listing S3 objects: {e}")
         return None
-    
+
     if 'Contents' not in response:
         print(f"No files found in S3 path: {s3_prefix}")
         return None
-    
+
     # Filter for usbcam-0.mp4 files
     video_files = []
     pattern = re.compile(rf"{experiment_id}_(\d{{14}})_usbcam-0\.mp4$")
-    
+
     for obj in response['Contents']:
         key = obj['Key']
         filename = key.split('/')[-1]
@@ -749,11 +752,11 @@ def _try_find_recent_video(
             except ValueError:
                 print(f"Could not parse timestamp from: {filename}")
                 continue
-    
+
     if not video_files:
-        print(f"No usbcam-0.mp4 files found matching pattern")
+        print("No usbcam-0.mp4 files found matching pattern")
         return None
-    
+
     # Optionally filter for videos within time limit
     candidates = video_files
     if time_limit is not None:
@@ -761,15 +764,15 @@ def _try_find_recent_video(
         time_limit_ago = now - time_limit
         candidates = [v for v in video_files if v['timestamp'] >= time_limit_ago]
         if not candidates:
-            print(f"No videos found within time limit")
+            print("No videos found within time limit")
             return None
-    
+
     # Sort by timestamp (most recent first) and get the most recent
     candidates.sort(key=lambda x: x['timestamp'], reverse=True)
     most_recent = candidates[0]
-    
+
     print(f"Found most recent video: {most_recent['key']}")
-    
+
     # Look for corresponding CO2 CSV file
     co2_csv_key = None
     timestamp_str = most_recent['timestamp_str']
@@ -780,7 +783,7 @@ def _try_find_recent_video(
             co2_csv_key = key
             print(f"Found corresponding CO2 CSV: {co2_csv_key}")
             break
-    
+
     return {
         'key': most_recent['key'],
         'timestamp_str': most_recent['timestamp_str'],
@@ -926,48 +929,48 @@ def _generate_co2_plot(s3_client, co2_csv_key: str, s3_bucket: str) -> Optional[
         # Download the gzipped CSV file
         response = s3_client.get_object(Bucket=s3_bucket, Key=co2_csv_key)
         gzipped_data = response['Body'].read()
-        
+
         # Decompress and read CSV
         csv_data = gzip.decompress(gzipped_data).decode('utf-8')
         df = pd.read_csv(io.StringIO(csv_data), index_col=0, parse_dates=True)
-        
+
         # Create plot with subplots
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8))
         fig.suptitle('CO2 Sensor Data', fontsize=14)
-        
+
         # Plot CO2
         ax1.plot(df.index, df['co2_raw'], 'b-', linewidth=1)
         ax1.set_ylabel('CO2 (ppm)', fontsize=10)
         ax1.set_title('CO2 Concentration', fontsize=12)
         ax1.grid(True, alpha=0.3)
-        
+
         # Plot Temperature
         ax2.plot(df.index, df['temperature'], 'r-', linewidth=1)
         ax2.set_ylabel('Temperature (°C)', fontsize=10)
         ax2.set_title('Temperature', fontsize=12)
         ax2.grid(True, alpha=0.3)
-        
+
         # Plot Humidity
         ax3.plot(df.index, df['humidity'], 'g-', linewidth=1)
         ax3.set_ylabel('Humidity (%)', fontsize=10)
         ax3.set_xlabel('Time', fontsize=10)
         ax3.set_title('Humidity', fontsize=12)
         ax3.grid(True, alpha=0.3)
-        
+
         # Rotate x-axis labels
         plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45)
-        
+
         plt.tight_layout()
-        
+
         # Convert to base64 string
         img_buffer = io.BytesIO()
         plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
         img_buffer.seek(0)
         img_base64 = base64.b64encode(img_buffer.read()).decode('utf-8')
         plt.close()
-        
+
         return img_base64
-        
+
     except Exception as e:
         print(f"Error generating CO2 plot: {e}")
         import traceback
@@ -1022,7 +1025,7 @@ def get_box_video_url(
             aws_access_key_id=aws_access_key,
             aws_secret_access_key=aws_secret_key
         )
-        
+
         # Resolve start_date (YYYY-MM-DD) and "now" in PST for UI defaults.
         now_pst = datetime.now(ZoneInfo("America/Los_Angeles"))
         today_start_date_str = now_pst.date().strftime('%Y-%m-%d')
@@ -1101,7 +1104,7 @@ def get_box_video_url(
                 result['co2_plot'] = co2_plot
 
         return result
-        
+
     except Exception as e:
         print(f"Error getting box video URL: {e}")
         import traceback
@@ -1118,55 +1121,55 @@ def _get_experiment_ids_for_box(api_key: str, base_id: str, box_id: str) -> Tupl
     """
     try:
         table = Api(api_key).table(base_id, 'experiment_planner')
-        
+
         # Get today and yesterday dates
         today = datetime.now().date()
         yesterday = today - timedelta(days=1)
         today_str = today.strftime('%Y-%m-%d')
         yesterday_str = yesterday.strftime('%Y-%m-%d')
-        
+
         # Build lightweight formula using Airtable's IS_SAME function for date comparison
         # IS_SAME compares dates properly regardless of time component
         formula = f"AND({{box_id}} = '{box_id}', OR(IS_SAME({{start_date}}, '{today_str}', 'day'), IS_SAME({{start_date}}, '{yesterday_str}', 'day')))"
-        
+
         # Only fetch minimal fields needed
         fields = ['experiment_id', 'box_id', 'start_date']
-        
+
         print(f"Looking for experiment for box {box_id} on {today_str} or {yesterday_str}")
         print(f"Formula: {formula}")
         records = table.all(formula=formula, fields=fields)
         print(f"Found {len(records)} record(s)")
         print(records)
-        
+
         if not records:
             print(f"No experiments found for box {box_id} in the last 2 days")
             return None, None
-        
+
         today_exp_id = None
         yesterday_exp_id = None
-        
+
         # Parse both today's and yesterday's experiments
         for record in records:
             fields_data = record.get('fields', {})
             start_date = fields_data.get('start_date')
-            
+
             # Handle if it's a list (lookup field)
             if isinstance(start_date, list) and start_date:
                 start_date = start_date[0]
-            
+
             exp_id = fields_data.get('experiment_id')
             if isinstance(exp_id, list) and exp_id:
                 exp_id = exp_id[0]
-            
+
             if start_date == today_str and exp_id:
                 today_exp_id = str(exp_id)
                 print(f"Found today's experiment_id: {today_exp_id}")
             elif start_date == yesterday_str and exp_id:
                 yesterday_exp_id = str(exp_id)
                 print(f"Found yesterday's experiment_id: {yesterday_exp_id}")
-        
+
         return today_exp_id, yesterday_exp_id
-        
+
     except Exception as e:
         print(f"Error getting experiment_ids for box {box_id}: {e}")
         import traceback

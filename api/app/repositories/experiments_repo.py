@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Tuple
+from typing import List
 
-from .airtable_base import AirtableBase
 from ..domain.experiment import Experiment, ExperimentFactory
 from ..services.notes_parser import parse_notes
-
+from .airtable_base import AirtableBase
 
 EXPERIMENT_QUEUE_TABLE = 'experiment_queue'
 

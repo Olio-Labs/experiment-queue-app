@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 from pyairtable import Api
+from pydantic import BaseModel
 
 from ..config import settings
 from ..helpers.airtable_helpers import (

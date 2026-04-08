@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import List
 
 from .airtable_base import AirtableBase
-
 
 MANIPULATIONS_TABLE = 'manipulations'
 DRUGS_TABLE = 'drugs'

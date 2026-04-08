@@ -1,10 +1,10 @@
-from datetime import datetime, date
+import logging
 from collections import defaultdict
+from datetime import date, datetime
 from typing import Dict, Set
 
 from pyairtable import Api
 
-import logging
 logger = logging.getLogger(__name__)
 
 
