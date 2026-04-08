@@ -54,7 +54,10 @@ export default function PlanPreview() {
     try {
       setActionMsg(null);
       const result = await recalculateTimes();
-      setActionMsg(result.message);
+      const msg = result.errors?.length
+        ? `${result.message} Errors: ${result.errors.join(", ")}`
+        : result.message;
+      setActionMsg(msg);
     } catch (e) {
       setActionMsg(`Error: ${e instanceof Error ? e.message : e}`);
     }

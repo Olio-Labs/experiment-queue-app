@@ -148,7 +148,7 @@ def debug_domain_queue() -> dict:
             "assignment_type_counts": type_counts,
         }
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/form-options")

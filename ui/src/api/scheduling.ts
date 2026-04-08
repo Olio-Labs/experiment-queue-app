@@ -33,6 +33,7 @@ export function recalculateTimes(): Promise<{
   success: boolean;
   message: string;
   updated_count: number;
+  errors: string[];
 }> {
   return post("/scheduling/recalculate");
 }

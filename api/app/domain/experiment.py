@@ -167,7 +167,10 @@ class DirectMappingExperiment(Experiment):
                         ctx.planner_history or [],
                     )
                 except Exception:
-                    available = True
+                    logger.warning(
+                        "Cage availability check failed for %s", rid,
+                    )
+                    available = False
                 if available:
                     ok_ids.append(rid)
                 else:
@@ -186,7 +189,7 @@ class DirectMappingExperiment(Experiment):
             }
             self.notes = update_notes_with_mapping(self.notes, notes_map)
         except Exception:
-            pass
+            logger.warning("Failed to update notes with cage mapping")
 
         return warnings
 

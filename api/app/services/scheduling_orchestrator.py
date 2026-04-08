@@ -86,64 +86,95 @@ class SchedulingOrchestrator:
                 scheduling_errors=["No valid syringe color options found."],
             )
 
-        # ---- 2. Fetch all data ----
-        experiments = get_all_experiments_from_queue(
-            self._api_key,
-            self._base_id,
-            self.cfg.airtable_table_name,
-        )
-        all_cages = get_all_cages(self._api_key, self._base_id)
-        all_boxes = get_all_boxes(self._api_key, self._base_id)
-        all_manips_map = get_all_manipulations_details(
-            self._api_key,
-            self._base_id,
-        )
-        all_drugs_map = get_all_drugs_details(
-            self._api_key,
-            self._base_id,
-        )
-        all_drug_inventory = get_all_records(
-            self._api_key,
-            self._base_id,
-            "drug_inventory",
-        )
-        task_times = get_task_times_dict(
-            self._api_key,
-            self._base_id,
-        )
-        cage_pool = get_potential_cage_pool_from_airtable(
-            self._api_key,
-            self._base_id,
-        )
+        # ---- 2. Fetch all data (parallelized) ----
+        from concurrent.futures import ThreadPoolExecutor
 
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            f_experiments = pool.submit(
+                get_all_experiments_from_queue,
+                self._api_key,
+                self._base_id,
+                self.cfg.airtable_table_name,
+            )
+            f_cages = pool.submit(
+                get_all_cages,
+                self._api_key,
+                self._base_id,
+            )
+            f_boxes = pool.submit(
+                get_all_boxes,
+                self._api_key,
+                self._base_id,
+            )
+            f_manips = pool.submit(
+                get_all_manipulations_details,
+                self._api_key,
+                self._base_id,
+            )
+            f_drugs = pool.submit(
+                get_all_drugs_details,
+                self._api_key,
+                self._base_id,
+            )
+            f_inventory = pool.submit(
+                get_all_records,
+                self._api_key,
+                self._base_id,
+                "drug_inventory",
+            )
+            f_task_times = pool.submit(
+                get_task_times_dict,
+                self._api_key,
+                self._base_id,
+            )
+            f_cage_pool = pool.submit(
+                get_potential_cage_pool_from_airtable,
+                self._api_key,
+                self._base_id,
+            )
+            f_syringe = pool.submit(
+                get_existing_syringe_color_assignments_from_planner,
+                self._api_key,
+                self._base_id,
+            )
+            f_in_progress = pool.submit(
+                get_in_progress_experiments_from_queue,
+                self._api_key,
+                self._base_id,
+                self.cfg.airtable_table_name,
+            )
+            f_scheduled = pool.submit(
+                get_scheduled_experiments_from_queue,
+                self._api_key,
+                self._base_id,
+                self.cfg.airtable_table_name,
+            )
+            f_manip_records = pool.submit(
+                get_all_records,
+                self._api_key,
+                self._base_id,
+                "manipulations",
+            )
+
+        experiments = f_experiments.result()
+        all_cages = f_cages.result()
+        all_boxes = f_boxes.result()
+        all_manips_map = f_manips.result()
+        all_drugs_map = f_drugs.result()
+        all_drug_inventory = f_inventory.result()
+        task_times = f_task_times.result()
+        cage_pool = f_cage_pool.result()
+        existing_syringe = f_syringe.result()
+        in_progress_exps = f_in_progress.result()
+        scheduled_exps = f_scheduled.result()
+        all_manip_records = f_manip_records.result()
+
+        # Second batch: planner_history depends on cage_pool
         relevant_ids = [c["custom_cage_id"] for c in cage_pool] if cage_pool else []
         planner_history = get_experiment_planner_history_from_airtable(
             self._api_key,
             self._base_id,
             relevant_ids,
-        )
-
-        existing_syringe = get_existing_syringe_color_assignments_from_planner(
-            self._api_key,
-            self._base_id,
-        )
-
-        in_progress_exps = get_in_progress_experiments_from_queue(
-            self._api_key,
-            self._base_id,
-            self.cfg.airtable_table_name,
-        )
-        scheduled_exps = get_scheduled_experiments_from_queue(
-            self._api_key,
-            self._base_id,
-            self.cfg.airtable_table_name,
-        )
-
-        # Lookup maps
-        all_manip_records = get_all_records(
-            self._api_key,
-            self._base_id,
-            "manipulations",
         )
         manip_rid_to_custom: dict[str, str] = {
             r["id"]: r["fields"].get("manipulation", "")
