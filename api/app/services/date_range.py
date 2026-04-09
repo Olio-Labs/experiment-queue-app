@@ -26,5 +26,3 @@ class DateRange:
     @property
     def days(self) -> List[date]:
         return list(self.iter_days())
-
-

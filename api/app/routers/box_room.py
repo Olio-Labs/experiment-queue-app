@@ -92,7 +92,10 @@ def get_box_room_data(
             except Exception:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid start_date '{selected_date}'. Expected YYYY-MM-DD.",
+                    detail=(
+                        f"Invalid start_date '{selected_date}'."
+                        " Expected YYYY-MM-DD."
+                    ),
                 )
         else:
             selected_date = (
@@ -102,9 +105,7 @@ def get_box_room_data(
             )
 
         today_pst_str = (
-            datetime.now(ZoneInfo("America/Los_Angeles"))
-            .date()
-            .strftime("%Y-%m-%d")
+            datetime.now(ZoneInfo("America/Los_Angeles")).date().strftime("%Y-%m-%d")
         )
 
         # Canonicalize: resolve experiment_id <-> start_date
@@ -130,39 +131,37 @@ def get_box_room_data(
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
             fut_boxes = ex.submit(
                 fetch_box_room_data,
-                API_KEY, BASE_ID, selected_date,
+                API_KEY,
+                BASE_ID,
+                selected_date,
                 experiment_id_filter or None,
             )
-            fut_cages = ex.submit(
-                fetch_cages_without_box_data, API_KEY, BASE_ID, True
-            )
+            fut_cages = ex.submit(fetch_cages_without_box_data, API_KEY, BASE_ID, True)
             fut_today_exp = ex.submit(
                 get_experiment_ids_for_start_date,
-                API_KEY, BASE_ID, today_pst_str,
+                API_KEY,
+                BASE_ID,
+                today_pst_str,
             )
             if selected_date == today_pst_str:
                 fut_selected_exp = fut_today_exp
             else:
                 fut_selected_exp = ex.submit(
                     get_experiment_ids_for_start_date,
-                    API_KEY, BASE_ID, selected_date,
+                    API_KEY,
+                    BASE_ID,
+                    selected_date,
                 )
 
-            boxes_by_number, boxes_with_issues, overlay_errors = (
-                fut_boxes.result()
-            )
+            boxes_by_number, boxes_with_issues, overlay_errors = fut_boxes.result()
             cages_data, cages_with_issues = fut_cages.result()
             today_exp_ids, today_exp_err = fut_today_exp.result()
             today_experiment_id = today_exp_ids[0] if today_exp_ids else ""
             selected_exp_ids, selected_exp_err = fut_selected_exp.result()
-            selected_experiment_id = (
-                selected_exp_ids[0] if selected_exp_ids else ""
-            )
+            selected_experiment_id = selected_exp_ids[0] if selected_exp_ids else ""
 
         # Serialize box data (convert int keys to strings for JSON)
-        serialized_boxes = {
-            str(k): v for k, v in boxes_by_number.items()
-        }
+        serialized_boxes = {str(k): v for k, v in boxes_by_number.items()}
 
         return {
             "boxes_by_number": serialized_boxes,

@@ -44,8 +44,13 @@ def parse_notes(notes_str: Optional[str]) -> Tuple[Dict[str, List[str]], List[st
                         direct_map[str(k)] = [str(v)]
         except Exception:
             import logging
-            logging.getLogger('notes_parser').warning(
-                f"Failed to parse notes mapping; leaving direct_map empty. Raw: {map_str[:200]}",
+
+            msg = (
+                "Failed to parse notes mapping;"
+                f" leaving direct_map empty. Raw: {map_str[:200]}"
+            )
+            logging.getLogger("notes_parser").warning(
+                msg,
                 exc_info=True,
             )
 
@@ -60,7 +65,8 @@ def parse_notes(notes_str: Optional[str]) -> Tuple[Dict[str, List[str]], List[st
                 manip_ids = [str(x) for x in parsed_list if str(x).strip()]
         except Exception:
             import logging
-            logging.getLogger('notes_parser').warning(
+
+            logging.getLogger("notes_parser").warning(
                 f"Failed to parse manips list; leaving empty. Raw: {items_str[:200]}",
                 exc_info=True,
             )
@@ -69,7 +75,9 @@ def parse_notes(notes_str: Optional[str]) -> Tuple[Dict[str, List[str]], List[st
     return direct_map, manip_ids
 
 
-def update_notes_with_mapping(notes_str: Optional[str], new_map: Dict[str, List[str]]) -> str:
+def update_notes_with_mapping(
+    notes_str: Optional[str], new_map: Dict[str, List[str]]
+) -> str:
     """
     Update or insert the mapping section in a notes string. Returns the
     updated notes.
@@ -112,7 +120,6 @@ _UNQUOTED_ID_PATTERN = re.compile(r"(?<!['\"])\b([mc]\d{7})\b(?!['\"])", re.IGNO
 
 
 def _quote_unquoted_ids(s: str) -> str:
-    # Wrap bare identifiers like m0000001 or c0000750 with quotes, unless already quoted.
+    # Wrap bare identifiers like m0000001 or c0000750
+    # with quotes, unless already quoted.
     return _UNQUOTED_ID_PATTERN.sub(r"'\1'", s)
-
-

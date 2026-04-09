@@ -14,8 +14,8 @@ class AirtableBase:
 
     @classmethod
     def from_env(cls) -> "AirtableBase":
-        api_key = os.getenv('AIRTABLE_API_KEY', '')
-        base_id = os.getenv('AIRTABLE_BASE_ID', '')
+        api_key = os.getenv("AIRTABLE_API_KEY", "")
+        base_id = os.getenv("AIRTABLE_BASE_ID", "")
         return cls(api_key=api_key, base_id=base_id)
 
     @property
@@ -24,5 +24,3 @@ class AirtableBase:
 
     def table(self, table_name: str) -> Any:
         return self.api.table(self.base_id, table_name)
-
-

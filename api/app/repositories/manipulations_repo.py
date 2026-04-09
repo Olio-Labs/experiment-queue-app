@@ -4,8 +4,8 @@ from typing import List
 
 from .airtable_base import AirtableBase
 
-MANIPULATIONS_TABLE = 'manipulations'
-DRUGS_TABLE = 'drugs'
+MANIPULATIONS_TABLE = "manipulations"
+DRUGS_TABLE = "drugs"
 
 
 class ManipulationsRepository:
@@ -17,5 +17,3 @@ class ManipulationsRepository:
 
     def list_all_drugs(self) -> List[dict]:
         return self._base.table(DRUGS_TABLE).all()
-
-

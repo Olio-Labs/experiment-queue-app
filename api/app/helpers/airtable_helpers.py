@@ -18,9 +18,7 @@ def get_api() -> Api:
     return Api(settings.airtable_api_key)
 
 
-def get_all_records(
-    api_key: str, base_id: str, table_name: str
-) -> list[dict]:
+def get_all_records(api_key: str, base_id: str, table_name: str) -> list[dict]:
     """Generic helper to fetch all records from a table."""
     if not all([api_key, base_id, table_name]):
         logger.warning(f"Missing Airtable config for fetching {table_name}.")
@@ -41,8 +39,7 @@ def get_all_experiments_from_queue(
     """Fetch all experiments, excluding 'done' and 'hold' status."""
     if not all([api_key, base_id, table_name]):
         logger.warning(
-            f"Missing Airtable config for fetching experiments "
-            f"from {table_name}."
+            f"Missing Airtable config for fetching experiments from {table_name}."
         )
         return []
     try:
@@ -50,9 +47,7 @@ def get_all_experiments_from_queue(
         formula = "AND({status}!='done',{status}!='hold')"
         return table.all(formula=formula)
     except Exception as e:
-        logger.error(
-            f"Error fetching experiments from {table_name}: {e}"
-        )
+        logger.error(f"Error fetching experiments from {table_name}: {e}")
         return []
 
 
@@ -67,9 +62,7 @@ def get_in_progress_experiments_from_queue(
         formula = "{status}='in_progress'"
         return table.all(formula=formula)
     except Exception as e:
-        logger.error(
-            f"Error fetching in-progress experiments: {e}"
-        )
+        logger.error(f"Error fetching in-progress experiments: {e}")
         return []
 
 
@@ -84,9 +77,7 @@ def get_scheduled_experiments_from_queue(
         formula = "{status}='scheduled'"
         return table.all(formula=formula)
     except Exception as e:
-        logger.error(
-            f"Error fetching scheduled experiments: {e}"
-        )
+        logger.error(f"Error fetching scheduled experiments: {e}")
         return []
 
 
@@ -143,9 +134,7 @@ def get_all_dropdown_options(
                         "multipleSelects",
                     ):
                         choices = field.get("options", {}).get("choices", [])
-                        options[field["name"]] = [
-                            c.get("name", "") for c in choices
-                        ]
+                        options[field["name"]] = [c.get("name", "") for c in choices]
         return options
     except Exception as e:
         logger.warning(f"Failed to fetch dropdown options: {e}")
@@ -166,13 +155,9 @@ def get_manipulation_details(
         return {}
 
     # Fetch manipulations
-    formula = "OR(" + ",".join(
-        [f"RECORD_ID()='{mid}'" for mid in manip_ids]
-    ) + ")"
+    formula = "OR(" + ",".join([f"RECORD_ID()='{mid}'" for mid in manip_ids]) + ")"
     manip_records = {
-        rec["id"]: rec
-        for rec in manip_table.all(formula=formula)
-        if "fields" in rec
+        rec["id"]: rec for rec in manip_table.all(formula=formula) if "fields" in rec
     }
 
     # Gather drug IDs
@@ -185,9 +170,9 @@ def get_manipulation_details(
     # Fetch drugs
     drugs_records: dict[str, dict] = {}
     if drug_ids:
-        drug_formula = "OR(" + ",".join(
-            [f"RECORD_ID()='{did}'" for did in drug_ids]
-        ) + ")"
+        drug_formula = (
+            "OR(" + ",".join([f"RECORD_ID()='{did}'" for did in drug_ids]) + ")"
+        )
         drugs_records = {
             rec["id"]: rec
             for rec in drugs_table.all(formula=drug_formula)
@@ -266,28 +251,32 @@ def generate_cage_preview(
 
     for i in range(num_male_cages):
         cage_id = f"c{next_num:07d}"
-        preview.append({
-            "cage_id": cage_id,
-            "n_mice": mice_per_cage,
-            "sex": "m",
-            "strain": strain,
-            "bought_from": supplier,
-            "dob": dob,
-            "received": date_received,
-        })
+        preview.append(
+            {
+                "cage_id": cage_id,
+                "n_mice": mice_per_cage,
+                "sex": "m",
+                "strain": strain,
+                "bought_from": supplier,
+                "dob": dob,
+                "received": date_received,
+            }
+        )
         next_num += 1
 
     for i in range(num_female_cages):
         cage_id = f"c{next_num:07d}"
-        preview.append({
-            "cage_id": cage_id,
-            "n_mice": mice_per_cage,
-            "sex": "f",
-            "strain": strain,
-            "bought_from": supplier,
-            "dob": dob,
-            "received": date_received,
-        })
+        preview.append(
+            {
+                "cage_id": cage_id,
+                "n_mice": mice_per_cage,
+                "sex": "f",
+                "strain": strain,
+                "bought_from": supplier,
+                "dob": dob,
+                "received": date_received,
+            }
+        )
         next_num += 1
 
     return preview
@@ -296,48 +285,30 @@ def generate_cage_preview(
 # --- Scheduling data-fetch helpers ---
 
 
-def get_all_manipulations_details(
-    api_key: str, base_id: str
-) -> dict[str, dict]:
+def get_all_manipulations_details(api_key: str, base_id: str) -> dict[str, dict]:
     """Fetch all manipulation records as a dict keyed by record ID."""
     records = get_all_records(api_key, base_id, "manipulations")
-    return {
-        record["id"]: record
-        for record in records
-        if "id" in record
-    }
+    return {record["id"]: record for record in records if "id" in record}
 
 
-def get_all_drugs_details(
-    api_key: str, base_id: str
-) -> dict[str, dict]:
+def get_all_drugs_details(api_key: str, base_id: str) -> dict[str, dict]:
     """Fetch all drug records as a dict keyed by record ID."""
     records = get_all_records(api_key, base_id, "drugs")
-    return {
-        record["id"]: record
-        for record in records
-        if "id" in record
-    }
+    return {record["id"]: record for record in records if "id" in record}
 
 
-def get_all_drug_inventory(
-    api_key: str, base_id: str
-) -> list[dict]:
+def get_all_drug_inventory(api_key: str, base_id: str) -> list[dict]:
     """Fetch all drug inventory records."""
     return get_all_records(api_key, base_id, "drug_inventory")
 
 
-def get_task_times_dict(
-    api_key: str, base_id: str
-) -> dict[str, float]:
+def get_task_times_dict(api_key: str, base_id: str) -> dict[str, float]:
     """Fetch the task_times table as a dict mapping task name to minutes."""
     try:
         records = get_all_records(api_key, base_id, "task_times")
         task_time_dict: dict[str, float] = {}
         if not records:
-            logger.warning(
-                "No records found in 'task_times' table."
-            )
+            logger.warning("No records found in 'task_times' table.")
             return task_time_dict
 
         for rec in records:
@@ -363,8 +334,7 @@ def parse_airtable_date_for_scheduling(
         return datetime.strptime(date_str, format_str).date()
     except ValueError:
         logger.warning(
-            f"Could not parse date string '{date_str}' "
-            f"with format '{format_str}'."
+            f"Could not parse date string '{date_str}' with format '{format_str}'."
         )
         return None
 
@@ -383,8 +353,7 @@ def get_potential_cage_pool_from_airtable(
 
     if not all([api_key, base_id, boxes_table_name, cages_table_name]):
         logger.warning(
-            "Missing Airtable config for "
-            "get_potential_cage_pool_from_airtable."
+            "Missing Airtable config for get_potential_cage_pool_from_airtable."
         )
         return []
 
@@ -395,21 +364,15 @@ def get_potential_cage_pool_from_airtable(
     potential_cages_list: list[dict] = []
     excluded_cages_by_status: dict[str, str] = {}
 
-    target_box_custom_ids = [
-        f"b{str(i).zfill(7)}" for i in range(9, 89)
-    ]
+    target_box_custom_ids = [f"b{str(i).zfill(7)}" for i in range(9, 89)]
     if not target_box_custom_ids:
         return []
 
-    formula_parts = [
-        f"{{box_id}}='{bid}'" for bid in target_box_custom_ids
-    ]
+    formula_parts = [f"{{box_id}}='{bid}'" for bid in target_box_custom_ids]
     box_filter_formula = "OR(" + ",".join(formula_parts) + ")"
 
     try:
-        boxes_formula = (
-            f"AND({box_filter_formula}, NOT({{use_type}}='testing'))"
-        )
+        boxes_formula = f"AND({box_filter_formula}, NOT({{use_type}}='testing'))"
         box_records = box_table.all(formula=boxes_formula)
 
         linked_cage_record_ids: list[str] = []
@@ -426,19 +389,12 @@ def get_potential_cage_pool_from_airtable(
                 linked_cage_record_ids.append(linked_ids[0])
 
         if not linked_cage_record_ids:
-            logger.info(
-                "No linked cage records found from boxes."
-            )
+            logger.info("No linked cage records found from boxes.")
             return []
 
-        cage_id_parts = [
-            f"RECORD_ID()='{rid}'"
-            for rid in linked_cage_record_ids
-        ]
+        cage_id_parts = [f"RECORD_ID()='{rid}'" for rid in linked_cage_record_ids]
         cage_filter = "OR(" + ",".join(cage_id_parts) + ")"
-        cages_final_filter = (
-            f"AND({cage_filter}, {{alive}}='True')"
-        )
+        cages_final_filter = f"AND({cage_filter}, {{alive}}='True')"
         cage_records = cage_table.all(formula=cages_final_filter)
 
         for cage_rec in cage_records:
@@ -447,12 +403,14 @@ def get_potential_cage_pool_from_airtable(
             custom_id = fields.get("cage")
             animal_s = fields.get("sex")
             if all([airtable_id, custom_id, animal_s]):
-                potential_cages_list.append({
-                    "airtable_record_id": airtable_id,
-                    "custom_cage_id": str(custom_id),
-                    "sex": str(animal_s).lower(),
-                    "full_fields": fields,
-                })
+                potential_cages_list.append(
+                    {
+                        "airtable_record_id": airtable_id,
+                        "custom_cage_id": str(custom_id),
+                        "sex": str(animal_s).lower(),
+                        "full_fields": fields,
+                    }
+                )
 
         if excluded_cages_by_status:
             logger.info(
@@ -461,9 +419,7 @@ def get_potential_cage_pool_from_airtable(
             )
 
     except Exception as e:
-        logger.error(
-            f"Error in get_potential_cage_pool_from_airtable: {e}"
-        )
+        logger.error(f"Error in get_potential_cage_pool_from_airtable: {e}")
         return []
 
     return potential_cages_list
@@ -481,9 +437,7 @@ def get_experiment_planner_history_from_airtable(
     """
     planner_table_name = settings.experiment_planner_copy_testing_table_name
     if not all([api_key, base_id, planner_table_name]):
-        logger.warning(
-            "Missing Airtable config for planner history."
-        )
+        logger.warning("Missing Airtable config for planner history.")
         return []
     if not relevant_custom_cage_ids:
         return []
@@ -495,13 +449,12 @@ def get_experiment_planner_history_from_airtable(
     manip_id_field = "manipulation_id"
     start_date_field = "start_date"
 
-    formula_parts = [
-        f"{{{cage_id_field}}}='{cid}'"
-        for cid in relevant_custom_cage_ids
-    ]
+    formula_parts = [f"{{{cage_id_field}}}='{cid}'" for cid in relevant_custom_cage_ids]
     filter_formula = "OR(" + ",".join(formula_parts) + ")"
     fields_to_retrieve = [
-        cage_id_field, manip_id_field, start_date_field,
+        cage_id_field,
+        manip_id_field,
+        start_date_field,
         "experiment_series",
     ]
 
@@ -517,25 +470,20 @@ def get_experiment_planner_history_from_airtable(
             experiment_series = fields.get("experiment_series", "")
 
             if all([custom_cage_id, manip_id, start_date_str]):
-                parsed_date = parse_airtable_date_for_scheduling(
-                    start_date_str
-                )
+                parsed_date = parse_airtable_date_for_scheduling(start_date_str)
                 if parsed_date:
-                    history_data.append({
-                        "cage_id": str(custom_cage_id),
-                        "manipulation_id": str(manip_id),
-                        "start_date": parsed_date,
-                        "experiment_series": (
-                            str(experiment_series)
-                            if experiment_series
-                            else ""
-                        ),
-                    })
+                    history_data.append(
+                        {
+                            "cage_id": str(custom_cage_id),
+                            "manipulation_id": str(manip_id),
+                            "start_date": parsed_date,
+                            "experiment_series": (
+                                str(experiment_series) if experiment_series else ""
+                            ),
+                        }
+                    )
     except Exception as e:
-        logger.error(
-            f"Error in "
-            f"get_experiment_planner_history_from_airtable: {e}"
-        )
+        logger.error(f"Error in get_experiment_planner_history_from_airtable: {e}")
         return []
 
     return history_data
@@ -558,9 +506,7 @@ def get_vehicle_drug_and_manip_maps(
 
     try:
         drugs_table = Api(api_key).table(base_id, "drugs")
-        all_drug_records = drugs_table.all(
-            fields=["drug_type", "manipulations"]
-        )
+        all_drug_records = drugs_table.all(fields=["drug_type", "manipulations"])
 
         for drug_rec in all_drug_records:
             drug_id = drug_rec.get("id")
@@ -571,17 +517,14 @@ def get_vehicle_drug_and_manip_maps(
             if not drug_id:
                 continue
 
-            is_vehicle = (
-                isinstance(drug_types, list)
-                and "vehicle" in drug_types
-            )
+            is_vehicle = isinstance(drug_types, list) and "vehicle" in drug_types
 
             if is_vehicle:
-                valid_ids = [
-                    m_id
-                    for m_id in linked_manip_ids
-                    if isinstance(m_id, str)
-                ] if linked_manip_ids else []
+                valid_ids = (
+                    [m_id for m_id in linked_manip_ids if isinstance(m_id, str)]
+                    if linked_manip_ids
+                    else []
+                )
                 if valid_ids:
                     vehicle_map[drug_id] = valid_ids
                     all_vehicle_manip_ids.update(valid_ids)
@@ -592,9 +535,7 @@ def get_vehicle_drug_and_manip_maps(
         )
 
     except Exception as e:
-        logger.error(
-            f"Error in get_vehicle_drug_and_manip_maps: {e}"
-        )
+        logger.error(f"Error in get_vehicle_drug_and_manip_maps: {e}")
         return {}, set()
 
     return vehicle_map, all_vehicle_manip_ids
@@ -604,15 +545,11 @@ def get_existing_syringe_color_assignments_from_planner(
     api_key: str, base_id: str
 ) -> dict[date, set[str]]:
     """Fetch existing syringe color assignments from planner table."""
-    planner_table_name = (
-        settings.experiment_planner_copy_testing_table_name
-    )
+    planner_table_name = settings.experiment_planner_copy_testing_table_name
     result: dict[date, set[str]] = {}
     try:
         planner_table = Api(api_key).table(base_id, planner_table_name)
-        records = planner_table.all(
-            fields=["start_date", "syringe_color"]
-        )
+        records = planner_table.all(fields=["start_date", "syringe_color"])
         for rec in records:
             fields = rec.get("fields", {})
             date_str = fields.get("start_date")
@@ -624,9 +561,7 @@ def get_existing_syringe_color_assignments_from_planner(
                         result[parsed] = set()
                     result[parsed].add(str(color))
     except Exception as e:
-        logger.error(
-            f"Error fetching syringe color assignments: {e}"
-        )
+        logger.error(f"Error fetching syringe color assignments: {e}")
     return result
 
 
@@ -637,33 +572,23 @@ def get_table_schema_from_metadata(
     import requests
 
     if not all([api_key, base_id, table_name_to_find]):
-        logger.warning(
-            "Missing parameters for get_table_schema_from_metadata."
-        )
+        logger.warning("Missing parameters for get_table_schema_from_metadata.")
         return None
 
-    meta_api_url = (
-        f"https://api.airtable.com/v0/meta/bases/{base_id}/tables"
-    )
+    meta_api_url = f"https://api.airtable.com/v0/meta/bases/{base_id}/tables"
     headers = {"Authorization": f"Bearer {api_key}"}
     try:
-        response = requests.get(
-            meta_api_url, headers=headers, timeout=15
-        )
+        response = requests.get(meta_api_url, headers=headers, timeout=15)
         response.raise_for_status()
         meta_data = response.json()
 
         for t_schema in meta_data.get("tables", []):
             if t_schema.get("name") == table_name_to_find:
                 return t_schema
-        logger.warning(
-            f"Table '{table_name_to_find}' not found in metadata."
-        )
+        logger.warning(f"Table '{table_name_to_find}' not found in metadata.")
         return None
     except requests.exceptions.RequestException as e:
-        logger.error(
-            f"Error fetching Airtable metadata for schema: {e}"
-        )
+        logger.error(f"Error fetching Airtable metadata for schema: {e}")
         return None
 
 
@@ -675,21 +600,15 @@ def extract_options_from_field_schema(
     """Extract select options from a field schema."""
     if not field_schema:
         logger.warning(
-            f"No schema provided for field '{field_name}' "
-            f"in table '{table_name}'."
+            f"No schema provided for field '{field_name}' in table '{table_name}'."
         )
         return None
 
     if field_schema.get("type") in ("singleSelect", "multipleSelects"):
         choices = field_schema.get("options", {}).get("choices", [])
-        return [
-            choice.get("name")
-            for choice in choices
-            if choice.get("name")
-        ]
+        return [choice.get("name") for choice in choices if choice.get("name")]
     else:
         logger.warning(
-            f"Field '{field_name}' in table '{table_name}' "
-            f"is not a select type."
+            f"Field '{field_name}' in table '{table_name}' is not a select type."
         )
         return None

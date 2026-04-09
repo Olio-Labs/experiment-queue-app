@@ -6,7 +6,7 @@ from ..domain.experiment import Experiment, ExperimentFactory
 from ..services.notes_parser import parse_notes
 from .airtable_base import AirtableBase
 
-EXPERIMENT_QUEUE_TABLE = 'experiment_queue'
+EXPERIMENT_QUEUE_TABLE = "experiment_queue"
 
 
 class ExperimentsRepository:
@@ -31,8 +31,12 @@ class ExperimentsRepository:
             records = tbl.all()
             # Fallback filtering
             records = [
-                r for r in records
-                if (r.get('fields', {}).get('status', '').strip().lower() not in {'done', 'hold'})
+                r
+                for r in records
+                if (
+                    r.get("fields", {}).get("status", "").strip().lower()
+                    not in {"done", "hold"}
+                )
             ]
         return [self._to_domain(r) for r in records]
 
@@ -56,8 +60,6 @@ class ExperimentsRepository:
         return exp
 
     def _is_in_progress(self, record: dict) -> bool:
-        fields = record.get('fields', {})
-        status = (fields.get('status') or '').strip().lower()
-        return status in {'in-progress', 'in progress', 'running'}
-
-
+        fields = record.get("fields", {})
+        status = (fields.get("status") or "").strip().lower()
+        return status in {"in-progress", "in progress", "running"}

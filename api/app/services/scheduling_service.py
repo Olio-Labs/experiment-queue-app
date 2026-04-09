@@ -29,8 +29,9 @@ def precommit_in_progress_resources_date_range(
     box_record_id_to_box_id_map: Dict[str, str],
 ) -> List[dict]:
     """
-    Adapter-style rewrite of pre_commit_in_progress_experiment_resources using real date keys.
-    Mirrors prior behavior but stores usage by actual date instead of weekday name.
+    Adapter-style rewrite of pre_commit_in_progress_experiment_resources
+    using real date keys.  Mirrors prior behavior but stores usage by
+    actual date instead of weekday name.
     """
     processed_in_progress: List[dict] = []
 
@@ -75,7 +76,8 @@ def precommit_in_progress_resources_date_range(
                         daily_cages_booked_preview[d] = daily_cages_booked_preview.get(
                             d, 0
                         ) + len(assigned_cages)
-                        # mice count requires cage lookup; keep it simple here (could be improved)
+                        # mice count requires cage lookup;
+                        # keep it simple here (could be improved)
                         daily_mice_booked_preview[d] = daily_mice_booked_preview.get(
                             d, 0
                         )
@@ -181,7 +183,8 @@ def precommit_scheduled_resources_date_range(
                 daily_cages_booked_preview[d] = daily_cages_booked_preview.get(
                     d, 0
                 ) + len(assigned_cage_record_ids)
-                # Boxes and mice could be computed similarly; keeping minimal parity for now
+                # Boxes and mice could be computed similarly;
+                # keeping minimal parity for now
 
             processed_scheduled.append(
                 {
@@ -269,7 +272,8 @@ def prepare_cage_heatmap_data(
             if not s or not e:
                 continue
 
-            # Reserve manipulations for actual experiment days (exclude end date for end-weight day logic)
+            # Reserve manipulations for actual experiment days
+            # (exclude end date for end-weight day logic)
             current = s
             while current < e:
                 if current in week_dates:

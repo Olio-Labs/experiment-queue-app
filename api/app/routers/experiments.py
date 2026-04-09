@@ -38,8 +38,7 @@ def list_experiments() -> dict:
 
         def to_record(e) -> dict:
             unique_manip_ids = [
-                custom_to_recid.get(str(mid))
-                for mid in (e.manipulation_ids or [])
+                custom_to_recid.get(str(mid)) for mid in (e.manipulation_ids or [])
             ]
             unique_manip_ids = [mid for mid in unique_manip_ids if mid]
             return {
@@ -110,12 +109,15 @@ def list_experiments() -> dict:
         for record in records:
             manip_ids = record["fields"].get("unique_manipulation_ids", [])
             record["manipulation_details"] = [
-                {"id": mid, **manip_details.get(mid, {"drugs": [], "safety": [], "dose_mg_kg": []})}
+                {
+                    "id": mid,
+                    **manip_details.get(
+                        mid, {"drugs": [], "safety": [], "dose_mg_kg": []}
+                    ),
+                }
                 for mid in manip_ids
             ]
-            record["manipulations_display"] = record["fields"].get(
-                "manipulations", ""
-            )
+            record["manipulations_display"] = record["fields"].get("manipulations", "")
 
         # Collect all field keys as headers
         all_field_keys: set[str] = set()

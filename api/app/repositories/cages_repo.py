@@ -4,8 +4,8 @@ from typing import List
 
 from .airtable_base import AirtableBase
 
-CAGES_TABLE = 'cages'
-BOXES_TABLE = 'boxes'
+CAGES_TABLE = "cages"
+BOXES_TABLE = "boxes"
 
 
 class CagesRepository:
@@ -17,5 +17,3 @@ class CagesRepository:
 
     def list_all_boxes(self) -> List[dict]:
         return self._base.table(BOXES_TABLE).all()
-
-

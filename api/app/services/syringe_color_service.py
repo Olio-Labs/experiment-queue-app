@@ -14,5 +14,3 @@ def get_existing_syringe_colors(
         return defaultdict(set)
     repo = PlannerRepository(api_key, base_id, planner_table_name)
     return repo.get_existing_syringe_colors_by_date()
-
-

@@ -37,9 +37,7 @@ class AddCagesRequest(BaseModel):
 def list_cages() -> dict:
     """Get cage statistics and listing."""
     try:
-        all_cages = get_all_cages(
-            settings.airtable_api_key, settings.airtable_base_id
-        )
+        all_cages = get_all_cages(settings.airtable_api_key, settings.airtable_base_id)
         total_cages = len(all_cages)
         male_cages = len(
             [c for c in all_cages if c.get("fields", {}).get("sex") == "m"]
@@ -129,16 +127,18 @@ def create_cages(data: AddCagesRequest) -> dict:
 
         records_to_create = []
         for cage in cage_preview:
-            records_to_create.append({
-                "cage": cage["cage_id"],
-                "n_mice": cage["n_mice"],
-                "sex": cage["sex"],
-                "strain": cage["strain"],
-                "bought_from": [cage["bought_from"]],
-                "dob": cage["dob"],
-                "received": cage["received"],
-                "alive": "True",
-            })
+            records_to_create.append(
+                {
+                    "cage": cage["cage_id"],
+                    "n_mice": cage["n_mice"],
+                    "sex": cage["sex"],
+                    "strain": cage["strain"],
+                    "bought_from": [cage["bought_from"]],
+                    "dob": cage["dob"],
+                    "received": cage["received"],
+                    "alive": "True",
+                }
+            )
 
         created_records = cages_table.batch_create(records_to_create)
 
@@ -152,12 +152,8 @@ def create_cages(data: AddCagesRequest) -> dict:
                 "total_created": total_created,
                 "male_created": male_created,
                 "female_created": female_created,
-                "first_cage": (
-                    cage_preview[0]["cage_id"] if cage_preview else "N/A"
-                ),
-                "last_cage": (
-                    cage_preview[-1]["cage_id"] if cage_preview else "N/A"
-                ),
+                "first_cage": (cage_preview[0]["cage_id"] if cage_preview else "N/A"),
+                "last_cage": (cage_preview[-1]["cage_id"] if cage_preview else "N/A"),
             },
         }
     except Exception as e:
