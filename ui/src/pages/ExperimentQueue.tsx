@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { fetchExperiments, deleteExperiment } from "../api/experiments";
 import { recalculateTimes } from "../api/scheduling";
 import type { ExperimentRecord } from "../types";
@@ -14,7 +14,6 @@ const HIDDEN_FIELDS = new Set([
 ]);
 
 export default function ExperimentQueue() {
-  const navigate = useNavigate();
   const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { fetchBoxRoomData, fetchBoxVideo, fetchFlaggedIssues } from "../api/boxRoom";
-import type { BoxRoomData, BoxVideoResponse } from "../types";
+import type { BankLayout, BoxRoomData, BoxVideoResponse } from "../types";
 
 /** Single box tile in the grid */
 function BoxTile({
@@ -56,7 +56,7 @@ function BankGrid({
   issueBoxes,
   onBoxClick,
 }: {
-  layout: Record<string, number[]>;
+  layout: BankLayout;
   data: BoxRoomData;
   issueBoxes: Set<number>;
   onBoxClick: (n: number) => void;
