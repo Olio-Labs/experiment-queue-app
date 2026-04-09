@@ -233,9 +233,7 @@ def compute_effective_last_injection_date_for_cage(
         )
         return None
 
-    parsed_date = parse_airtable_date_func(
-        date_str_to_parse, airtable_date_format_str
-    )
+    parsed_date = parse_airtable_date_func(date_str_to_parse, airtable_date_format_str)
     if parsed_date and not isinstance(parsed_date, date):
         parsed_date = parsed_date.date()
     if not parsed_date:
@@ -294,9 +292,7 @@ def calculate_cage_availability_score(
     # Parse the last use date
     if isinstance(last_use_date_value, list) and last_use_date_value:
         last_use_date_str = (
-            last_use_date_value[0]
-            if isinstance(last_use_date_value[0], str)
-            else None
+            last_use_date_value[0] if isinstance(last_use_date_value[0], str) else None
         )
     elif isinstance(last_use_date_value, str):
         last_use_date_str = last_use_date_value
@@ -361,9 +357,7 @@ def select_cages_spatially_with_availability(
         return []
 
     cages = live_all_cages_details_for_availability_check
-    live_index = {
-        c.get("id"): c for c in cages
-    }
+    live_index = {c.get("id"): c for c in cages}
 
     def _is_available_all_days(fields: dict, cage_id: str) -> bool:
         booked_dates = preview_booked_cages.get(cage_id, set())
@@ -517,9 +511,7 @@ def select_cages_by_recency_and_availability(
     # availability call
     available: List[Tuple[str, date]] = []
     cages = live_all_cages_details_for_availability_check
-    live_index = {
-        c.get("id"): c for c in cages
-    }
+    live_index = {c.get("id"): c for c in cages}
 
     def _is_available_all_days(fields: dict, cage_id: str) -> bool:
         booked_dates = preview_booked_cages.get(cage_id, set())

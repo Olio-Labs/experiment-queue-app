@@ -999,8 +999,7 @@ def _try_find_recent_video_in_hour(
         key = obj.get("Key") or ""
         filename = key.split("/")[-1]
         if (
-            filename
-            == f"{experiment_id}_{most_recent['timestamp_str']}"
+            filename == f"{experiment_id}_{most_recent['timestamp_str']}"
             "_co2-sensor-scd40-0.csv.gz"
         ):
             co2_csv_key = key
@@ -1281,7 +1280,7 @@ def get_box_video_url(
         co2_csv_key = None
         try:
             # This is consistent with the naming used elsewhere.
-            ts_str = selected_video['timestamp_str']
+            ts_str = selected_video["timestamp_str"]
             co2_csv_key = (
                 f"{exp_id}/{box_id}/{cage_id}/"
                 f"{exp_id}_{ts_str}"
@@ -1750,9 +1749,7 @@ def get_cart_event_videos(
         return {
             "success": False,
             "error": (
-                f"Error resolving experiment_id"
-                f" for box {box_id}"
-                f" on {date_str}: {e}"
+                f"Error resolving experiment_id for box {box_id} on {date_str}: {e}"
             ),
             "status_code": 500,
         }
@@ -1989,9 +1986,7 @@ def generate_cart_event_clip_file(
         return {
             "success": False,
             "error": (
-                f"Invalid clip timing for"
-                f" {kind_norm}:"
-                f" start={start_s}, end={end_s}."
+                f"Invalid clip timing for {kind_norm}: start={start_s}, end={end_s}."
             ),
             "status_code": 500,
         }

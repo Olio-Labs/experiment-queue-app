@@ -93,8 +93,7 @@ def get_box_room_data(
                 raise HTTPException(
                     status_code=400,
                     detail=(
-                        f"Invalid start_date '{selected_date}'."
-                        " Expected YYYY-MM-DD."
+                        f"Invalid start_date '{selected_date}'. Expected YYYY-MM-DD."
                     ),
                 )
         else:

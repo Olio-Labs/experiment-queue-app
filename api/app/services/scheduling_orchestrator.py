@@ -220,13 +220,22 @@ class SchedulingOrchestrator:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
 
-            sa_file = self.cfg.google_service_account_file
             cal_id = self.cfg.google_tech_calendar_id
-            if sa_file and cal_id:
-                creds = service_account.Credentials.from_service_account_file(
-                    sa_file,
-                    scopes=["https://www.googleapis.com/auth/calendar"],
-                )
+            sa_json = self.cfg.google_service_account_json
+            sa_file = self.cfg.google_service_account_file
+            if cal_id and (sa_json or sa_file):
+                scopes = ["https://www.googleapis.com/auth/calendar"]
+                if sa_json:
+                    import json as _json
+
+                    info = _json.loads(sa_json)
+                    creds = service_account.Credentials.from_service_account_info(
+                        info, scopes=scopes
+                    )
+                else:
+                    creds = service_account.Credentials.from_service_account_file(
+                        sa_file, scopes=scopes
+                    )
                 service = build(
                     "calendar",
                     "v3",

@@ -466,12 +466,8 @@ class PseudorandomExperiment(Experiment):
                     for c in potential_cages_pool
                     if c.get("sex") == "f"
                 }
-                sel_m_count = len(
-                    [1 for _id in selected if _id in male_ids]
-                )
-                sel_f_count = len(
-                    [1 for _id in selected if _id in female_ids]
-                )
+                sel_m_count = len([1 for _id in selected if _id in male_ids])
+                sel_f_count = len([1 for _id in selected if _id in female_ids])
                 msg = (
                     f"ASSIGN_DIAG [Vehicle] manip={manip}"
                     f" selected M/F={sel_m_count}/{sel_f_count}"
@@ -559,9 +555,7 @@ class PseudorandomExperiment(Experiment):
                         for c in female_pool
                         if c.get("airtable_record_id") not in sel_f
                     ]
-                remaining = max(
-                    0, male_need + female_need - len(selected)
-                )
+                remaining = max(0, male_need + female_need - len(selected))
                 msg = (
                     f"ASSIGN_DIAG [General] manip={manip}"
                     f" selected_total={len(selected)}"
@@ -597,10 +591,9 @@ class ExperimentFactory:
 
         assignment: AssignmentType = fields.get("assignment")  # type: ignore
         if not assignment:
-            exp_id = record.get('id', 'unknown')
+            exp_id = record.get("id", "unknown")
             raise ValueError(
-                f"Experiment {exp_id} is missing"
-                " required 'assignment' field"
+                f"Experiment {exp_id} is missing required 'assignment' field"
             )
 
         # Parse scheduling fields

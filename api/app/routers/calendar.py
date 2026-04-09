@@ -45,13 +45,6 @@ def push_to_google_calendar(data: dict) -> dict:
                 detail="Google Calendar not configured.",
             )
 
-        service_account_file = settings.google_service_account_file
-        if not os.path.exists(service_account_file):
-            raise HTTPException(
-                status_code=500,
-                detail="Service account credentials not found.",
-            )
-
         experiments = data.get("experiments", [])
         if not experiments:
             raise HTTPException(
@@ -59,10 +52,24 @@ def push_to_google_calendar(data: dict) -> dict:
                 detail="No experiment data provided.",
             )
 
-        credentials = service_account.Credentials.from_service_account_file(
-            service_account_file,
-            scopes=["https://www.googleapis.com/auth/calendar"],
-        )
+        scopes = ["https://www.googleapis.com/auth/calendar"]
+        if settings.google_service_account_json:
+            import json
+
+            info = json.loads(settings.google_service_account_json)
+            credentials = service_account.Credentials.from_service_account_info(
+                info, scopes=scopes
+            )
+        else:
+            sa_file = settings.google_service_account_file
+            if not os.path.exists(sa_file):
+                raise HTTPException(
+                    status_code=500,
+                    detail="Service account credentials not found.",
+                )
+            credentials = service_account.Credentials.from_service_account_file(
+                sa_file, scopes=scopes
+            )
         service = build("calendar", "v3", credentials=credentials)
         calendar_id = settings.google_experiment_calendar_id
 
