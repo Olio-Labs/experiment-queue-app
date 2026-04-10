@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from typing import Any
 
 from pyairtable import Api
+
+from ..config import settings
 
 
 @dataclass
@@ -14,9 +15,7 @@ class AirtableBase:
 
     @classmethod
     def from_env(cls) -> "AirtableBase":
-        api_key = os.getenv("AIRTABLE_API_KEY", "")
-        base_id = os.getenv("AIRTABLE_BASE_ID", "")
-        return cls(api_key=api_key, base_id=base_id)
+        return cls(api_key=settings.airtable_api_key, base_id=settings.airtable_base_id)
 
     @property
     def api(self) -> Api:

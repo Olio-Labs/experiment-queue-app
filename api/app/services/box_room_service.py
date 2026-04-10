@@ -25,6 +25,8 @@ import time
 
 import matplotlib.pyplot as plt
 
+from ..config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -679,12 +681,10 @@ def get_box_flagged_issues_history(
     if cached and (now - cached[0]) < _CACHE_TTL_SECONDS_DEFAULT:
         return cached[1]
 
-    api_key = os.getenv("AIRTABLE_API_KEY")
-    base_id = os.getenv("AIRTABLE_BASE_ID")
+    api_key = settings.airtable_api_key
+    base_id = settings.airtable_base_id
     if not api_key or not base_id:
-        raise ValueError(
-            "AIRTABLE_API_KEY or AIRTABLE_BASE_ID not found in environment"
-        )
+        raise ValueError("AIRTABLE_API_KEY or AIRTABLE_BASE_ID not configured")
 
     target_box_id = f"b{box_number:07d}"
     table = Api(api_key).table(base_id, "experiment_planner")
@@ -735,15 +735,11 @@ def get_cage_flagged_issues_history(cage_id: str) -> str:
     Returns the flagged_issues_history text field content.
     """
     try:
-        import os
-
-        api_key = os.getenv("AIRTABLE_API_KEY")
-        base_id = os.getenv("AIRTABLE_BASE_ID")
+        api_key = settings.airtable_api_key
+        base_id = settings.airtable_base_id
 
         if not api_key or not base_id:
-            print(
-                "Error: AIRTABLE_API_KEY or AIRTABLE_BASE_ID not found in environment"
-            )
+            logger.error("AIRTABLE_API_KEY or AIRTABLE_BASE_ID not configured")
             return ""
 
         table = Api(api_key).table(base_id, "cages")
