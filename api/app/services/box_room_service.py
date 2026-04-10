@@ -1141,8 +1141,6 @@ def get_box_video_url(
     cage_id: str,
     box_id: str,
     start_date: Optional[str],
-    aws_access_key: str,
-    aws_secret_key: str,
     s3_bucket: str = "rp-raw-olio",
     timestamp_override: Optional[str] = None,
     experiment_id_override: Optional[str] = None,
@@ -1157,8 +1155,6 @@ def get_box_video_url(
         base_id: Airtable base ID
         cage_id: Cage ID (e.g., 'c0000750')
         box_id: Box ID (e.g., 'b0000041')
-        aws_access_key: AWS access key for S3
-        aws_secret_key: AWS secret key for S3
         s3_bucket: S3 bucket name (default: 'rp-raw-olio')
 
     Returns:
@@ -1180,10 +1176,9 @@ def get_box_video_url(
         if date_str is not None:
             _parse_yyyy_mm_dd(date_str)
 
-        # Initialize S3 client
-        s3_client = boto3.client(
-            "s3", aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key
-        )
+        # Initialize S3 client (uses default credential chain: ECS task
+        # role in Fargate, ~/.aws/credentials locally)
+        s3_client = boto3.client("s3")
 
         # Resolve start_date (YYYY-MM-DD) and "now" in PST for UI defaults.
         now_pst = datetime.now(ZoneInfo("America/Los_Angeles"))
@@ -1698,8 +1693,6 @@ def get_cart_event_videos(
     box_id: str,
     start_date: str,
     experiment_id_override: Optional[str] = None,
-    aws_access_key: str,
-    aws_secret_key: str,
     metadata_bucket: str = "rodent-party",
     metadata_key: str = "internal/metadata/cart_event_metadata.csv",
 ) -> Dict[str, Any]:
@@ -1751,11 +1744,7 @@ def get_cart_event_videos(
         }
 
     try:
-        s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-        )
+        s3_client = boto3.client("s3")
     except Exception as e:
         return {
             "success": False,
@@ -1913,8 +1902,6 @@ def generate_cart_event_clip_file(
     start_date: str,
     kind: str,
     experiment_id_override: Optional[str] = None,
-    aws_access_key: str,
-    aws_secret_key: str,
     metadata_bucket: str = "rodent-party",
     metadata_key: str = "internal/metadata/cart_event_metadata.csv",
 ) -> Dict[str, Any]:
@@ -1942,8 +1929,6 @@ def generate_cart_event_clip_file(
         box_id=box_id,
         start_date=start_date,
         experiment_id_override=experiment_id_override,
-        aws_access_key=aws_access_key,
-        aws_secret_key=aws_secret_key,
         metadata_bucket=metadata_bucket,
         metadata_key=metadata_key,
     )
@@ -1999,11 +1984,7 @@ def generate_cart_event_clip_file(
     cache_dir = _init_cart_event_cache()
 
     try:
-        s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-        )
+        s3_client = boto3.client("s3")
     except Exception as e:
         return {
             "success": False,

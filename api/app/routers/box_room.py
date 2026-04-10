@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import logging
-import os
 from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -233,19 +232,12 @@ def get_box_video_endpoint(
     else:
         date_str = datetime.now().date().strftime("%Y-%m-%d")
 
-    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    if not aws_access_key or not aws_secret_key:
-        raise HTTPException(status_code=500, detail="AWS credentials not configured")
-
     result = get_box_video_url(
         api_key=API_KEY,
         base_id=BASE_ID,
         cage_id=cage_id,
         box_id=box_id,
         start_date=date_str,
-        aws_access_key=aws_access_key,
-        aws_secret_key=aws_secret_key,
         s3_bucket="rp-raw-olio",
         timestamp_override=(timestamp or "").strip() or None,
         experiment_id_override=(experiment_id or "").strip() or None,
@@ -275,11 +267,6 @@ def get_cart_videos(
             detail=f"Invalid start_date '{start_date}'. Expected YYYY-MM-DD.",
         )
 
-    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    if not aws_access_key or not aws_secret_key:
-        raise HTTPException(status_code=500, detail="AWS credentials not configured")
-
     result = get_cart_event_videos(
         api_key=API_KEY,
         base_id=BASE_ID,
@@ -287,8 +274,6 @@ def get_cart_videos(
         box_id=box_id,
         start_date=start_date,
         experiment_id_override=(experiment_id or "").strip() or None,
-        aws_access_key=aws_access_key,
-        aws_secret_key=aws_secret_key,
         metadata_bucket="rodent-party",
         metadata_key="internal/metadata/cart_event_metadata.csv",
     )
@@ -320,11 +305,6 @@ def get_cart_clip(
             detail=f"Invalid start_date '{start_date}'. Expected YYYY-MM-DD.",
         )
 
-    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    if not aws_access_key or not aws_secret_key:
-        raise HTTPException(status_code=500, detail="AWS credentials not configured")
-
     from ..services.box_room_service import generate_cart_event_clip_file
 
     result = generate_cart_event_clip_file(
@@ -335,8 +315,6 @@ def get_cart_clip(
         start_date=start_date,
         kind=kind,
         experiment_id_override=(experiment_id or "").strip() or None,
-        aws_access_key=aws_access_key,
-        aws_secret_key=aws_secret_key,
         metadata_bucket="rodent-party",
         metadata_key="internal/metadata/cart_event_metadata.csv",
     )
