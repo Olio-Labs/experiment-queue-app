@@ -517,7 +517,14 @@ def fetch_box_room_data(
 
             cage_custom_id = str(f.get("cage")) if f.get("cage") is not None else None
             if cage_custom_id:
-                entry["cages"].append(cage_custom_id)
+                entry["cages"].append(
+                    {
+                        "cage_id": cage_custom_id,
+                        "record_id": rid,
+                        "sex": sex_value,
+                        "n_mice": n_mice,
+                    }
+                )
 
             if sex_value == "m":
                 entry["male_count"] += n_mice
