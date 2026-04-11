@@ -220,6 +220,11 @@ def get_box_video_endpoint(
     experiment_id: Optional[str] = Query(None),
 ) -> dict:
     """Get presigned S3 URL for box video."""
+    if not cage_id or cage_id == "undefined":
+        raise HTTPException(
+            status_code=400,
+            detail="Missing or invalid cage_id parameter",
+        )
     date_str = (start_date or "").strip()
     if date_str:
         try:
